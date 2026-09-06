@@ -1,0 +1,45 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Bookshelf\Tests\UseCase;
+
+use Bookshelf\Application\PasserCommande\PasserCommande;
+use Bookshelf\Application\PayerCommande\PayerCommande;
+use Bookshelf\Domain\Model\Commande\IdentifiantCommande;
+use Bookshelf\Domain\Model\Commande\PaiementImpossible;
+use Bookshelf\Tests\Support\TestServiceContainer;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * Le cas d'usage « payer une commande », exerce de bout en bout dans l'hexagone interne.
+ *
+ * Ni base de donnees, ni serveur de paiement : `ReferenceDePaiement` est la trace d'un
+ * paiement deja encaisse ailleurs. Notre systeme ne fait que constater.
+ */
+final class PayerCommandeTest extends TestCase
+{
+    #[Test]
+    public function une_commande_confirmee_peut_etre_payee(): void
+    {
+        $container = new TestServiceContainer();
+        $identifiantCommande = $this->uneCommande($container);
+
+        $container->application()->payerCommande(new PayerCommande($identifiantCommande->enChaine(), 'PAY-001'));
+
+        $this->expectException(PaiementImpossible::class);
+
+        // La preuve que l'etat a bien change : on ne peut pas payer deux fois.
+        $container->application()->payerCommande(new PayerCommande($identifiantCommande->enChaine(), 'PAY-002'));
+    }
+
+    private function uneCommande(TestServiceContainer $container): IdentifiantCommande
+    {
+        $identifiantEbook = $container->catalogue()->ajouter('Architecture hexagonale', 2500);
+
+        return $container->application()->passerCommande(
+            new PasserCommande($identifiantEbook->enChaine(), 1, 'paul@exemple.fr', 'FR'),
+        );
+    }
+}

@@ -4,7 +4,7 @@ Duree : 45 min en binomes + 20 min de consolidation individuelle. Branche `ateli
 
 ```bash
 git checkout atelier-3
-composer test            # 8 echecs
+composer test            # 9 echecs sur 28
 composer deptrac         # 1 violation
 ```
 
@@ -25,6 +25,12 @@ Completez la phrase « pour ... » pour chaque port de la tranche « commander u
 
 Le depot contient deja toutes les interfaces : l'exercice est de les RETROUVER et de
 comprendre pourquoi chacune est la ou elle est.
+
+Il contient aussi, tout ecrit, le cas d'usage **`PayerCommande` / `PayerCommandeService`**. Lisez-le :
+il illustre le patron du service applicatif que vous retrouverez partout — charger
+l'agregat, appeler UNE methode metier, enregistrer, publier. Le service n'y decide de
+rien, c'est `Commande::payer()` qui sait si le paiement est possible. Il vous servira de point
+de depart au palier D, ou il apprendra a lire l'heure.
 
 ## 2. Les 6 classes a ecrire
 
@@ -66,7 +72,7 @@ La correction tient en une ligne. Trouvez-la avant de lire le corrige.
 ## Criteres de reussite
 
 - [ ] Les cinq ports sont nommes en « pour ... » et associes a une interface
-- [ ] Les 8 tests passent
+- [ ] Les 9 tests passent
 - [ ] `composer deptrac` sort en succes
 - [ ] Le gabarit d'affichage n'aurait rien a formater
 

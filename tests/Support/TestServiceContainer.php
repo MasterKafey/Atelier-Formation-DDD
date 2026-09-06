@@ -10,6 +10,7 @@ use Bookshelf\Application\ConfigurableEventDispatcher;
 use Bookshelf\Application\EnvoyerEmailDeConfirmation;
 use Bookshelf\Application\EventDispatcher;
 use Bookshelf\Application\PasserCommande\PasserCommandeService;
+use Bookshelf\Application\PayerCommande\PayerCommandeService;
 use Bookshelf\Domain\Model\Commande\CommandePassee;
 use Bookshelf\Domain\Model\Commande\CommandeRepository;
 use Bookshelf\Infrastructure\InMemory\CatalogueEnMemoire;
