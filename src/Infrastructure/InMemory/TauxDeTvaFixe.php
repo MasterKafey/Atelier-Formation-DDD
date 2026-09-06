@@ -9,7 +9,7 @@ use Bookshelf\Domain\Model\Common\CodePays;
 use Bookshelf\Domain\Model\Common\TauxDeTva;
 
 /**
- * A ECRIRE. Second adaptateur du meme port, a taux fixe, pour les tests.
+ * CORRIGE. Second adaptateur du meme port, a taux fixe, pour les tests.
  *
  * Avoir deux adaptateurs n'est pas un luxe : c'est la preuve que l'abstraction en est
  * une. Si vous ne pouvez pas en ecrire un second sans que les noms deviennent absurdes,
@@ -23,11 +23,11 @@ final readonly class TauxDeTvaFixe implements FournisseurDeTauxDeTva
 
     public static function avecPourcentage(int $pourcentage): self
     {
-        throw new \RuntimeException('TODO atelier 3');
+        return new self(TauxDeTva::depuisPourcentage($pourcentage));
     }
 
     public function tauxDeTvaPourEbooksDansLePays(CodePays $pays): TauxDeTva
     {
-        throw new \RuntimeException('TODO atelier 3');
+        return $this->rate;
     }
 }

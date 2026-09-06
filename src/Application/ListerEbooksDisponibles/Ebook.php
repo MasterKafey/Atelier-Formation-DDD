@@ -28,13 +28,17 @@ final readonly class Ebook
     ) {
     }
 
-    /** A ECRIRE : c'est ici que le prix devient une chaine affichable, et nulle part ailleurs. */
     public static function depuisDomaine(
         IdentifiantEbook $identifiantEbook,
         string $titre,
         Montant $prix,
         int $nombreDeVentes,
     ): self {
-        throw new \RuntimeException('TODO atelier 3');
+        return new self(
+            $identifiantEbook->enChaine(),
+            $titre,
+            $prix->formate(),
+            $nombreDeVentes,
+        );
     }
 }

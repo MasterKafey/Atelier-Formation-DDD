@@ -18,7 +18,7 @@ use Bookshelf\Infrastructure\InMemory\CommandeRepositoryEnMemoire;
 use Bookshelf\Infrastructure\InMemory\TauxDeTvaFixe;
 
 /**
- * A ECRIRE. Conteneur de services ECRIT A LA MAIN, distinct de celui du framework : il ne
+ * CORRIGE. Conteneur de services ECRIT A LA MAIN, distinct de celui du framework : il ne
  * contient que les services du coeur. Pas de routeur, pas de moteur de gabarits.
  *
  * Regles :
@@ -41,26 +41,48 @@ final class TestServiceContainer
 
     public function application(): ApplicationInterface
     {
-        throw new \RuntimeException('TODO atelier 3');
+        return new Application(
+            new PasserCommandeService(
+                $this->commandeRepository(),
+                $this->catalogue(),
+                TauxDeTvaFixe::avecPourcentage($this->pourcentageTva),
+                $this->eventDispatcher(),
+            ),
+            new PayerCommandeService(
+                $this->commandeRepository(),
+                $this->eventDispatcher(),
+            ),
+            $this->catalogue(),
+        );
     }
 
     public function eventDispatcher(): EventDispatcher
     {
-        throw new \RuntimeException('TODO atelier 3');
+        if ($this->eventDispatcher === null) {
+            $dispatcher = new ConfigurableEventDispatcher();
+            $dispatcher->addSubscriber(
+                CommandePassee::class,
+                [new EnvoyerEmailDeConfirmation($this->mailer()), 'quandCommandePassee'],
+            );
+
+            $this->eventDispatcher = $dispatcher;
+        }
+
+        return $this->eventDispatcher;
     }
 
     public function mailer(): MailerSpy
     {
-        throw new \RuntimeException('TODO atelier 3');
+        return $this->mailer ??= new MailerSpy();
     }
 
     public function catalogue(): CatalogueEnMemoire
     {
-        throw new \RuntimeException('TODO atelier 3');
+        return $this->catalogue ??= new CatalogueEnMemoire();
     }
 
     public function commandeRepository(): CommandeRepository
     {
-        throw new \RuntimeException('TODO atelier 3');
+        return $this->commandeRepository ??= new CommandeRepositoryEnMemoire();
     }
 }

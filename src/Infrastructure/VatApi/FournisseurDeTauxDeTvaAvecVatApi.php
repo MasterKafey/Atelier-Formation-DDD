@@ -9,7 +9,7 @@ use Bookshelf\Domain\Model\Common\CodePays;
 use Bookshelf\Domain\Model\Common\TauxDeTva;
 
 /**
- * A ECRIRE. La couche anticorruption.
+ * CORRIGE. La couche anticorruption.
  *
  * C'est le seul endroit de l'application ou l'on a le droit d'ecrire `RateType::Tbe`,
  * `'ebooks'` ou `'electronic'`. Au-dela, on ne parle plus que de `CodePays` et de
@@ -27,6 +27,8 @@ final readonly class FournisseurDeTauxDeTvaAvecVatApi implements FournisseurDeTa
 
     public function tauxDeTvaPourEbooksDansLePays(CodePays $pays): TauxDeTva
     {
-        throw new \RuntimeException('TODO atelier 3');
+        $result = $this->vatApi->vatRateCheck(RateType::Tbe, $pays->enChaine(), 'ebooks');
+
+        return TauxDeTva::depuisPourcentage($result->rate('electronic'));
     }
 }
