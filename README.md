@@ -35,6 +35,7 @@ etre bloque par l'atelier precedent.
 | `atelier-3` | 6 elements a ecrire, 8 tests **rouges**, 1 violation de couche | **8 echecs sur 24** | **1 violation** |
 | `atelier-3-corrige` | Ports et adaptateurs, view model, test de cas d'usage | vert, 24 tests | 0 violation |
 | `reference-complete` | Etat final : atelier 3 + persistance Doctrine | vert, 56 tests | 0 violation |
+| `palier-d-horloge` | Corrige du palier D : le temps entre dans le modele | vert, 100 tests | 0 violation |
 
 ```bash
 git checkout atelier-2
@@ -49,13 +50,20 @@ main
      |- atelier-2 - atelier-2-corrige
          |- atelier-3 - atelier-3-corrige
              |- reference-complete
+                 |- palier-d-horloge
 ```
 
 `reference-complete` est la branche a ouvrir pour montrer le resultat final : elle porte
 tout l'atelier 3 plus la couche de persistance Doctrine, corrige du palier C de
-l'atelier 2. C'est la seule branche qui a besoin de doctrine/orm : relancez
-`composer install` en arrivant dessus, et en la quittant. Les quatre concessions faites a
-l'ORM y sont documentees dans `docs/atelier-2/corrige-palier-c.md`.
+l'atelier 2. Les quatre concessions faites a l'ORM y sont documentees dans
+`docs/reference-complete.md`.
+
+`palier-d-horloge` va un cran plus loin : elle fait entrer le temps dans le modele sans
+lui faire perdre son determinisme, corrige du palier D de l'atelier 3. Voir
+`docs/palier-d-horloge.md`.
+
+Ces deux branches ajoutent des dependances (doctrine/orm, puis psr/clock et
+symfony/clock) : relancez `composer install` en arrivant dessus, et en les quittant.
 
 ## Structure cible
 
