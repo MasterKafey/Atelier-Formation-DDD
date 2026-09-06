@@ -1,0 +1,35 @@
+{
+    "name": "dyosis/bookshelf",
+    "description": "Projet fil rouge de la formation Architecture Symfony & Domain-Driven Design",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.2",
+        "symfony/uid": "^6.4 || ^7.0",
+        "webmozart/assert": "^1.11"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5 || ^11.0",
+        "qossmic/deptrac": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Bookshelf\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Bookshelf\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:domain": "phpunit --testsuite domain",
+        "test:usecase": "phpunit --testsuite usecase",
+        "deptrac": "deptrac analyse --config-file=deptrac.yaml"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable"
+}
