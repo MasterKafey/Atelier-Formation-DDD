@@ -86,6 +86,7 @@ le metier prefere se rattraper plutot que prevenir.
 `Context`. Puis faites tourner le meme scenario contre un second contexte qui emet de
 vraies requetes HTTP.
 
-**Palier D : horloge.** Introduisez `Psr\Clock\ClockInterface`, remplacez tout
-`new DateTimeImmutable('now')` du coeur, et prouvez par un test qu'une commande
-enregistre bien sa date de paiement.
+**Palier D : horloge.** Le coeur ne contient aujourd'hui AUCUNE date : c'est pour ca
+qu'il est trivialement deterministe. Introduisez `Psr\Clock\ClockInterface` et la regle
+« une commande non payee depuis plus de 48 heures ne peut plus etre payee », sans perdre
+ce determinisme. Fiche detaillee : `docs/atelier-3/palier-d-horloge.md`.
