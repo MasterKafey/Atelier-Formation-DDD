@@ -6,6 +6,7 @@ namespace Bookshelf\Tests\Support;
 
 use Bookshelf\Application\Application;
 use Bookshelf\Application\ApplicationInterface;
+use Bookshelf\Application\CommanderLivrePapier\CommanderLivrePapierService;
 use Bookshelf\Application\ConfigurableEventDispatcher;
 use Bookshelf\Application\EnvoyerEmailDeConfirmation;
 use Bookshelf\Application\EventDispatcher;
@@ -15,6 +16,7 @@ use Bookshelf\Domain\Model\Commande\CommandePassee;
 use Bookshelf\Domain\Model\Commande\CommandeRepository;
 use Bookshelf\Infrastructure\InMemory\CatalogueEnMemoire;
 use Bookshelf\Infrastructure\InMemory\CommandeRepositoryEnMemoire;
+use Bookshelf\Infrastructure\InMemory\StockEnMemoire;
 use Bookshelf\Infrastructure\InMemory\TauxDeTvaFixe;
 use Symfony\Component\Clock\MockClock;
 
@@ -42,6 +44,7 @@ final class TestServiceContainer
     private ?CatalogueEnMemoire $catalogue = null;
     private ?MailerSpy $mailer = null;
     private ?MockClock $horloge = null;
+    private ?StockEnMemoire $stock = null;
 
     public function __construct(private readonly int $pourcentageTva = 20)
     {
@@ -62,8 +65,18 @@ final class TestServiceContainer
                 $this->eventDispatcher(),
                 $this->horloge(),
             ),
+            new CommanderLivrePapierService(
+                $this->stock(),
+                $this->stock(),
+            ),
             $this->catalogue(),
         );
+    }
+
+    /** Publique : les tests y posent le stock initial et l'inspectent ensuite. */
+    public function stock(): StockEnMemoire
+    {
+        return $this->stock ??= new StockEnMemoire();
     }
 
     public function eventDispatcher(): EventDispatcher

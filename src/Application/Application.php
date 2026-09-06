@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Bookshelf\Application;
 
+use Bookshelf\Application\CommanderLivrePapier\CommanderLivrePapier;
+use Bookshelf\Application\CommanderLivrePapier\CommanderLivrePapierService;
 use Bookshelf\Application\ListerEbooksDisponibles\ListerEbooksDisponibles;
 use Bookshelf\Application\PasserCommande\PasserCommande;
 use Bookshelf\Application\PasserCommande\PasserCommandeService;
@@ -17,6 +19,7 @@ final readonly class Application implements ApplicationInterface
     public function __construct(
         private PasserCommandeService $passerCommande,
         private PayerCommandeService $payerCommande,
+        private CommanderLivrePapierService $commanderLivrePapier,
         private ListerEbooksDisponibles $listerEbooksDisponibles,
     ) {
     }
@@ -29,6 +32,11 @@ final readonly class Application implements ApplicationInterface
     public function payerCommande(PayerCommande $intention): void
     {
         ($this->payerCommande)($intention);
+    }
+
+    public function commanderLivrePapier(CommanderLivrePapier $intention): void
+    {
+        ($this->commanderLivrePapier)($intention);
     }
 
     public function listerEbooksDisponibles(): array

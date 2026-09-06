@@ -88,6 +88,10 @@ insuffisant sur les livres papier : exception dans le service applicatif, messag
 formulaire dans le controleur, code JSON dans l'API. Rappel de l'entretien avec Camille :
 le metier prefere se rattraper plutot que prevenir.
 
+Corrige sur la branche `palier-b-erreur-metier` (`docs/palier-b-erreur-metier.md`). Le
+vrai enseignement n'y est pas le mecanisme d'exception, qui est simple, mais le fait que
+cette verification ne PEUT PAS etre une garantie : le stock est une fonction impure.
+
 **Palier C : Gherkin.** Convertissez `PasserCommandeTest` en scenario Behat avec sa classe
 `Context`. Puis faites tourner le meme scenario contre un second contexte qui emet de
 vraies requetes HTTP.
