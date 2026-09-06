@@ -37,6 +37,7 @@ etre bloque par l'atelier precedent.
 | `reference-complete` | Etat final : atelier 3 + persistance Doctrine | vert, 60 tests | 0 violation |
 | `palier-d-horloge` | Corrige du palier D : le temps entre dans le modele | vert, 104 tests | 0 violation |
 | `palier-b-erreur-metier` | Corrige du palier B : parler a l'utilisateur depuis le coeur | vert, 123 tests | 0 violation |
+| `palier-c-gherkin` | Corrige du palier C : un scenario, deux adaptateurs | vert, 123 tests + 8 scenarios | 0 violation |
 
 ```bash
 git checkout atelier-2
@@ -53,6 +54,7 @@ main
              |- reference-complete
                  |- palier-d-horloge
                      |- palier-b-erreur-metier
+                         |- palier-c-gherkin
 ```
 
 `reference-complete` est la branche a ouvrir pour montrer le resultat final : elle porte
@@ -64,8 +66,14 @@ l'atelier 2. Les quatre concessions faites a l'ORM y sont documentees dans
 lui faire perdre son determinisme, corrige du palier D de l'atelier 3. Voir
 `docs/palier-d-horloge.md`.
 
-`palier-b-erreur-metier` ferme la serie : comment le coeur signale un probleme destine a
-un humain sans savoir a quel humain il parle. Voir `docs/palier-b-erreur-metier.md`.
+`palier-b-erreur-metier` traite la question de savoir comment le coeur signale un probleme
+destine a un humain sans savoir a quel humain il parle. Voir
+`docs/palier-b-erreur-metier.md`.
+
+`palier-c-gherkin` ferme la serie, et c'est la branche la plus demonstrative : le meme
+fichier de scenarios Gherkin est execute par DEUX adaptateurs, l'un en memoire en 0,06 s,
+l'autre contre un vrai serveur HTTP en 0,79 s. C'est aussi la seule branche qui contient
+une couche web. Voir `docs/palier-c-gherkin.md`.
 
 Les paliers sont empiles pour n'avoir qu'une branche a ouvrir quand on veut montrer
 l'etat le plus abouti ; ils restent independants les uns des autres dans la progression
