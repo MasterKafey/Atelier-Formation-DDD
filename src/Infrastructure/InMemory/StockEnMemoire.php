@@ -20,9 +20,14 @@ final class StockEnMemoire implements NiveauxDeStock, Stock
     public function ajouter(int $exemplaires): IdentifiantLivre
     {
         $identifiantLivre = IdentifiantLivre::generer();
-        $this->exemplaires[$identifiantLivre->enChaine()] = $exemplaires;
+        $this->ajouterAvecIdentifiant($identifiantLivre, $exemplaires);
 
         return $identifiantLivre;
+    }
+
+    public function ajouterAvecIdentifiant(IdentifiantLivre $identifiantLivre, int $exemplaires): void
+    {
+        $this->exemplaires[$identifiantLivre->enChaine()] = $exemplaires;
     }
 
     public function nombreExemplairesDisponibles(IdentifiantLivre $identifiantLivre): int

@@ -96,6 +96,11 @@ cette verification ne PEUT PAS etre une garantie : le stock est une fonction imp
 `Context`. Puis faites tourner le meme scenario contre un second contexte qui emet de
 vraies requetes HTTP.
 
+Corrige sur la branche `palier-c-gherkin` (`docs/palier-c-gherkin.md`). Attention : le
+depot n'a aucune couche web avant ce palier, il faut donc l'ecrire. C'est le plus long
+des quatre paliers, et le plus demonstratif : un port entrant, deux adaptateurs, le meme
+fichier de scenarios.
+
 **Palier D : horloge.** Le coeur ne contient aujourd'hui AUCUNE date : c'est pour ca
 qu'il est trivialement deterministe. Introduisez `Psr\Clock\ClockInterface` et la regle
 « une commande non payee depuis plus de 48 heures ne peut plus etre payee », sans perdre

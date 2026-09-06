@@ -58,7 +58,14 @@ final class FournisseurDeTauxDeTvaAvecVatApiTest extends TestCase
     public function le_vocabulaire_de_vatapi_ne_sort_pas_de_l_infrastructure(): void
     {
         $racine = dirname(__DIR__, 2) . '/src';
-        $interdits = ['TBE', "'ebooks'", 'electronic', 'rate_type', 'filter_match'];
+        /*
+         * Uniquement des jetons NON AMBIGUS. La valeur du filtre vatapi.com est
+         * litteralement 'ebooks' : impossible de la chercher sans attraper au passage
+         * tout code parlant legitimement d'e-books. Un test d'architecture qui crie au
+         * loup finit desactive, donc inutile. Les quatre jetons restants n'ont, eux,
+         * aucune raison d'exister ailleurs que dans l'adaptateur.
+         */
+        $interdits = ['TBE', 'electronic', 'rate_type', 'filter_match'];
 
         $fuites = [];
         $fichiers = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($racine));

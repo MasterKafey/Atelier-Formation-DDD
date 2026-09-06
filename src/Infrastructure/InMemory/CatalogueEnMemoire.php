@@ -28,15 +28,28 @@ final class CatalogueEnMemoire implements EbookRepository, ListerEbooksDisponibl
     public function ajouter(string $titre, int $prixEnCentimes, int $nombreDeVentes = 0, bool $retire = false): IdentifiantEbook
     {
         $id = IdentifiantEbook::generer();
+        $this->ajouterAvecIdentifiant($id, $titre, $prixEnCentimes, $nombreDeVentes, $retire);
 
+        return $id;
+    }
+
+    /**
+     * Meme chose, avec un identifiant impose. Utile des que le catalogue est alimente
+     * depuis l'exterieur : jeu d'essai, import, ou fixtures d'un test de bout en bout.
+     */
+    public function ajouterAvecIdentifiant(
+        IdentifiantEbook $id,
+        string $titre,
+        int $prixEnCentimes,
+        int $nombreDeVentes = 0,
+        bool $retire = false,
+    ): void {
         $this->ebooks[$id->enChaine()] = [
             'title' => $titre,
             'price' => $prixEnCentimes,
             'sold' => $nombreDeVentes,
             'hidden' => $retire,
         ];
-
-        return $id;
     }
 
     public function parIdentifiant(IdentifiantEbook $identifiantEbook): EbookReadModel

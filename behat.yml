@@ -1,0 +1,19 @@
+# Le MEME fichier de scenarios, execute par DEUX suites.
+#
+# C'est la traduction directe de l'architecture hexagonale au niveau des tests : un port
+# entrant, deux adaptateurs. Le scenario est ecrit une fois ; seules les definitions
+# d'etapes changent.
+#
+#   composer behat            les deux suites
+#   composer behat:hexagone   rapide, en memoire, a lancer a chaque sauvegarde
+#   composer behat:http       lent, vrai serveur, a lancer avant de livrer
+
+default:
+  suites:
+    hexagone:
+      paths: [ '%paths.base%/features' ]
+      contexts: [ 'Bookshelf\Tests\Behat\HexagoneContext' ]
+
+    http:
+      paths: [ '%paths.base%/features' ]
+      contexts: [ 'Bookshelf\Tests\Behat\HttpContext' ]
