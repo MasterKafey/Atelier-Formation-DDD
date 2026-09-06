@@ -14,17 +14,26 @@ use Bookshelf\Domain\Model\Common\CodePays;
 use Bookshelf\Domain\Model\Common\Devise;
 use Bookshelf\Domain\Model\Common\Montant;
 use Bookshelf\Domain\Model\Common\TauxDeTva;
+use DateTimeImmutable;
 
 /**
- * Fourni. Un builder permet de ne mentionner dans un test QUE ce qui est particulier a
- * ce test. Tout le reste prend une valeur par defaut raisonnable.
+ * Un builder permet de ne mentionner dans un test QUE ce qui est particulier a ce test.
+ * Tout le reste prend une valeur par defaut raisonnable.
+ *
+ * PALIER D : les dates sont des valeurs FIXES, pas `new DateTimeImmutable('now')`. Un
+ * builder de test qui lit l'horloge systeme rendrait toute la suite non deterministe, et
+ * produirait ces echecs du vendredi soir que personne n'arrive a reproduire le lundi.
  */
 final class CommandeBuilder
 {
+    public const PASSEE_LE = '2026-03-01 10:00:00';
+
     private IdentifiantCommande $identifiantCommande;
     private AdresseEmail $adresseEmail;
     private CodePays $pays;
     private TauxDeTva $tauxDeTva;
+    private DateTimeImmutable $passeeLe;
+    private ?DateTimeImmutable $payeeLe = null;
     /** @var array{IdentifiantEbook, Montant, Quantite}[] */
     private array $lignes = [];
     private bool $confirmee = false;
@@ -37,6 +46,7 @@ final class CommandeBuilder
         $this->adresseEmail = AdresseEmail::depuisChaine('paul@exemple.fr');
         $this->pays = CodePays::depuisChaine('FR');
         $this->tauxDeTva = TauxDeTva::depuisPourcentage(20);
+        $this->passeeLe = new DateTimeImmutable(self::PASSEE_LE);
     }
 
     public static function creer(): self
@@ -56,6 +66,14 @@ final class CommandeBuilder
     {
         $clone = clone $this;
         $clone->tauxDeTva = TauxDeTva::depuisPourcentage($pourcentage);
+
+        return $clone;
+    }
+
+    public function passeeLe(string $date): self
+    {
+        $clone = clone $this;
+        $clone->passeeLe = new DateTimeImmutable($date);
 
         return $clone;
     }
@@ -80,10 +98,12 @@ final class CommandeBuilder
         return $clone;
     }
 
-    public function payee(): self
+    /** Payee dans les delais, sauf si vous precisez une autre date. */
+    public function payee(?string $payeeLe = null): self
     {
         $clone = $this->confirmee();
         $clone->payee = true;
+        $clone->payeeLe = new DateTimeImmutable($payeeLe ?? self::PASSEE_LE);
 
         return $clone;
     }
@@ -98,24 +118,7 @@ final class CommandeBuilder
 
     public function construire(): Commande
     {
-        $commande = Commande::passer($this->identifiantCommande, $this->adresseEmail, $this->pays, $this->tauxDeTva);
-
-        foreach ($this->lignes as [$identifiantEbook, $prixUnitaire, $quantite]) {
-            $commande->ajouterLigne($identifiantEbook, $prixUnitaire, $quantite);
-        }
-
-        if ($this->confirmee) {
-            $commande->confirmer();
-        }
-
-        if ($this->payee) {
-            $commande->payer(ReferenceDePaiement::depuisChaine('PAY-TEST-001'));
-        }
-
-        if ($this->annulee) {
-            $commande->annuler();
-        }
-
+        $commande = $this->construireEnGardantLesEvenements();
         $commande->relacherEvenements();
 
         return $commande;
@@ -124,7 +127,13 @@ final class CommandeBuilder
     /** Comme `construire()`, mais sans vider les evenements enregistres. */
     public function construireEnGardantLesEvenements(): Commande
     {
-        $commande = Commande::passer($this->identifiantCommande, $this->adresseEmail, $this->pays, $this->tauxDeTva);
+        $commande = Commande::passer(
+            $this->identifiantCommande,
+            $this->adresseEmail,
+            $this->pays,
+            $this->tauxDeTva,
+            $this->passeeLe,
+        );
 
         foreach ($this->lignes as [$identifiantEbook, $prixUnitaire, $quantite]) {
             $commande->ajouterLigne($identifiantEbook, $prixUnitaire, $quantite);
@@ -135,7 +144,10 @@ final class CommandeBuilder
         }
 
         if ($this->payee) {
-            $commande->payer(ReferenceDePaiement::depuisChaine('PAY-TEST-001'));
+            $commande->payer(
+                ReferenceDePaiement::depuisChaine('PAY-TEST-001'),
+                $this->payeeLe ?? $this->passeeLe,
+            );
         }
 
         if ($this->annulee) {

@@ -2,6 +2,9 @@
 
 **Atelier 3, palier d'approfondissement. Environ 30 min. Branche `atelier-3`.**
 
+> Corrigé sur la branche `palier-d-horloge`, documenté dans `docs/palier-d-horloge.md`.
+> Ne l'ouvrez qu'après avoir buté sur le troisième piège, c'est celui qui apprend le plus.
+
 ---
 
 ## L'état de départ, et pourquoi il compte

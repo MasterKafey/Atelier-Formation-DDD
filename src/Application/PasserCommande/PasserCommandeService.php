@@ -9,16 +9,13 @@ use Bookshelf\Domain\Model\Commande\Commande;
 use Bookshelf\Domain\Model\Commande\CommandeRepository;
 use Bookshelf\Domain\Model\Commande\IdentifiantCommande;
 use Bookshelf\Domain\Model\Commande\Quantite;
+use Psr\Clock\ClockInterface;
 
 /**
  * Service applicatif : un cas d'usage, reutilisable par n'importe quel client.
  *
- * Les regles appliquees ici :
- *   - entree en types primitifs (via le DTO) : n'importe quel client peut appeler ;
- *   - retourne au plus l'identifiant de la nouvelle entite, jamais l'entite elle-meme ;
- *   - un seul agregat enregistre par appel ;
- *   - les effets secondaires passent par des domain events ;
- *   - les evenements sont publies APRES l'enregistrement, jamais avant.
+ * PALIER D : c'est ICI que vit l'horloge, pas dans l'entite. La couche application a le
+ * droit de dependre d'une abstraction d'infrastructure ; le domaine, non.
  */
 final readonly class PasserCommandeService
 {
@@ -27,12 +24,12 @@ final readonly class PasserCommandeService
         private EbookRepository $ebookRepository,
         private FournisseurDeTauxDeTva $fournisseurDeTauxDeTva,
         private EventDispatcher $eventDispatcher,
+        private ClockInterface $horloge,
     ) {
     }
 
     public function __invoke(PasserCommande $intention): IdentifiantCommande
     {
-        // Valider la relation : si l'e-book n'existe pas, getById leve une exception.
         $ebook = $this->ebookRepository->parIdentifiant($intention->identifiantEbook());
 
         $tauxDeTva = $this->fournisseurDeTauxDeTva->tauxDeTvaPourEbooksDansLePays(
@@ -41,11 +38,19 @@ final readonly class PasserCommandeService
 
         $identifiantCommande = $this->commandeRepository->prochainIdentifiant();
 
+        /*
+         * UNE SEULE lecture de l'horloge par cas d'usage. Appeler now() plusieurs fois
+         * donnerait des instants differents : invisible sur une commande, ruineux sur un
+         * traitement par lots, et impossible a reproduire quand le bug remonte.
+         */
+        $maintenant = $this->horloge->now();
+
         $commande = Commande::passer(
             $identifiantCommande,
             $intention->adresseEmail(),
             $intention->codePays(),
             $tauxDeTva,
+            $maintenant,
         );
 
         $commande->ajouterLigne($ebook->identifiantEbook(), $ebook->prix(), Quantite::depuisEntier($intention->quantite));
@@ -53,7 +58,6 @@ final readonly class PasserCommandeService
 
         $this->commandeRepository->enregistrer($commande);
 
-        // Enregistrer, PUIS publier. Un e-mail parti ne se rattrape pas.
         $this->eventDispatcher->dispatchAll($commande->relacherEvenements());
 
         return $identifiantCommande;

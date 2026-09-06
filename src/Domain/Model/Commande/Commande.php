@@ -9,46 +9,43 @@ use Bookshelf\Domain\Model\Common\CodePays;
 use Bookshelf\Domain\Model\Common\Devise;
 use Bookshelf\Domain\Model\Common\Montant;
 use Bookshelf\Domain\Model\Common\TauxDeTva;
+use DateInterval;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * La racine de l'agregat Commande, desormais persistable.
+ * La racine de l'agregat Commande.
  *
- * CE QUI A CHANGE PAR RAPPORT A L'ATELIER 2, et pourquoi :
+ * PALIER D : le temps est entre dans le modele, et il y est entre PAR LES ARGUMENTS.
  *
- *   1. Des attributs `#[ORM\...]`. L'entite reste du code coeur au sens des deux regles :
- *      on peut l'instancier et appeler ses methodes sans base de donnees, sans contexte.
- *      Les attributs contiennent des details techniques (noms de colonnes, types) ; c'est
- *      un compromis assume, et il vaut mieux que d'exposer les proprietes privees a
- *      l'exterieur pour qu'un mapper les lise.
+ * `passer()` et `payer()` recoivent une date ; l'entite ne connait aucune horloge. C'est ce
+ * qui lui permet de rester une fonction pure de ses entrees : donnez-lui les memes
+ * arguments, elle se comportera toujours de la meme facon. Les tests unitaires de cette
+ * classe n'ont donc aucune horloge a configurer, et ils restent instantanes.
  *
- *   2. `$lignes` est une `Collection` Doctrine et non plus un `array`. C'est la
- *      concession la plus visible : utiliser les associations de l'ORM fait entrer
- *      `Doctrine\Common\Collections` dans le domaine. On l'accepte pour les entites
- *      FILLES de l'agregat (regle 2 : associations un-a-plusieurs uniquement). On ne
- *      l'accepterait pas pour referencer un autre agregat, qui reste designe par son
- *      identifiant.
- *
- *   3. `$lignes` est bidirectionnelle : `LigneDeCommande` connait sa commande. C'est une
- *      exigence de l'ORM pour un `mappedBy`, pas un choix de modelisation.
- *
- * CE QUI N'A PAS CHANGE, et c'est l'essentiel :
- *   - aucun setter, aucune methode dont le nom commence par `set` ;
- *   - les memes cinq invariants, protteges par les memes gardes ;
- *   - les evenements ne sont PAS mappes : ils sont transitoires, ils ne survivent pas a
- *     un rechargement, et c'est voulu.
+ * L'horloge, elle, vit dans les services applicatifs : eux ont le droit de dependre
+ * d'une abstraction d'infrastructure (`Psr\Clock\ClockInterface`).
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'orders')]
 class Commande
 {
+    /**
+     * Delai de paiement. Nomme d'apres le metier, pas d'apres sa valeur : le jour ou
+     * Bookshelf passera a 72 heures, on ne cherchera pas ou est le « 48 » dans le code.
+     */
+    private const DELAI_DE_PAIEMENT = 'PT48H';
+
     #[ORM\Column(type: 'string', name: 'status', length: 20, enumType: EtatCommande::class)]
     private EtatCommande $etat = EtatCommande::EnAttente;
 
     #[ORM\Column(type: 'payment_reference', name: 'payment_reference', nullable: true)]
     private ?ReferenceDePaiement $referenceDePaiement = null;
+
+    #[ORM\Column(type: 'datetime_immutable', name: 'paid_at', nullable: true)]
+    private ?DateTimeImmutable $payeeLe = null;
 
     /** @var Collection<int, LigneDeCommande> */
     #[ORM\OneToMany(
@@ -59,12 +56,7 @@ class Commande
     )]
     private Collection $lignes;
 
-    /**
-     * Non mappe : Doctrine ignore les proprietes sans attribut. Les evenements sont
-     * transitoires, relaches par le service applicatif juste apres l'enregistrement.
-     *
-     * @var object[]
-     */
+    /** @var object[] */
     private array $evenements = [];
 
     private function __construct(
@@ -80,6 +72,9 @@ class Commande
 
         #[ORM\Column(type: 'vat_rate', name: 'vat_rate')]
         private TauxDeTva $tauxDeTva,
+
+        #[ORM\Column(type: 'datetime_immutable', name: 'placed_at')]
+        private DateTimeImmutable $passeeLe,
     ) {
         $this->lignes = new ArrayCollection();
     }
@@ -89,8 +84,9 @@ class Commande
         AdresseEmail $adresseEmail,
         CodePays $pays,
         TauxDeTva $tauxDeTva,
+        DateTimeImmutable $passeeLe,
     ): self {
-        return new self($identifiantCommande, $adresseEmail, $pays, $tauxDeTva);
+        return new self($identifiantCommande, $adresseEmail, $pays, $tauxDeTva, $passeeLe);
     }
 
     public function ajouterLigne(IdentifiantEbook $identifiantEbook, Montant $prixUnitaire, Quantite $quantite): void
@@ -121,7 +117,7 @@ class Commande
         );
     }
 
-    public function payer(ReferenceDePaiement $reference): void
+    public function payer(ReferenceDePaiement $reference, DateTimeImmutable $payeeLe): void
     {
         if ($this->etat === EtatCommande::Annulee) {
             throw PaiementImpossible::carAnnulee($this->identifiantCommande);
@@ -135,10 +131,20 @@ class Commande
             throw PaiementImpossible::carNonConfirmee($this->identifiantCommande);
         }
 
+        if ($payeeLe > $this->derniereDateDePaiement()) {
+            throw PaiementImpossible::carDelaiDepasse($this->identifiantCommande, $this->passeeLe, $payeeLe);
+        }
+
         $this->etat = EtatCommande::Payee;
         $this->referenceDePaiement = $reference;
+        $this->payeeLe = $payeeLe;
 
-        $this->evenements[] = new CommandePayee($this->identifiantCommande, $this->totalTtc(), $reference);
+        $this->evenements[] = new CommandePayee(
+            $this->identifiantCommande,
+            $this->totalTtc(),
+            $reference,
+            $payeeLe,
+        );
     }
 
     public function annuler(): void
@@ -175,6 +181,16 @@ class Commande
         return $this->identifiantCommande;
     }
 
+    /**
+     * Expose pour les tests d'adaptateur : c'est la seule facon de verifier qu'une date
+     * survit a un aller-retour en base. On accepte ce getter comme on a accepte celui de
+     * l'identifiant ; s'il en fallait beaucoup d'autres, il faudrait un read model.
+     */
+    public function payeeLe(): ?DateTimeImmutable
+    {
+        return $this->payeeLe;
+    }
+
     /** @return object[] */
     public function relacherEvenements(): array
     {
@@ -182,5 +198,10 @@ class Commande
         $this->evenements = [];
 
         return $evenements;
+    }
+
+    private function derniereDateDePaiement(): DateTimeImmutable
+    {
+        return $this->passeeLe->add(new DateInterval(self::DELAI_DE_PAIEMENT));
     }
 }

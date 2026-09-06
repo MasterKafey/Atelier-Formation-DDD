@@ -8,10 +8,9 @@ use Bookshelf\Domain\Model\Commande\IdentifiantCommande;
 use Bookshelf\Domain\Model\Commande\ReferenceDePaiement;
 
 /**
- * Command DTO du cas d'usage « payer une commande ».
- *
- * Types primitifs en entree, value objects en sortie : n'importe quel client peut en
- * construire un, et le service applicatif n'a pas a etre une liste de conversions.
+ * Command DTO. Aucune date : le client ne decide pas quand il paie, c'est l'application
+ * qui le constate. Une date fournie par l'appelant serait une donnee CONTEXTUELLE dont il
+ * ne faut jamais lui confier la responsabilite.
  */
 final readonly class PayerCommande
 {

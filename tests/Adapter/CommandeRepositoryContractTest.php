@@ -71,6 +71,18 @@ final class CommandeRepositoryContractTest extends TestCase
                 $rechargee->totalTtc(),
                 sprintf('%s : le taux de TVA ne survit pas a l\'aller-retour.', $nom),
             );
+
+            /*
+             * PALIER D. Une date stockee sans fuseau et relue dans un autre ne vaut plus
+             * la meme chose : c'est le genre de bug qu'on ne voit qu'en production, un
+             * dimanche de changement d'heure. Le test de contrat est l'endroit ou il se
+             * detecte.
+             */
+            self::assertEquals(
+                $attendue->payeeLe()?->getTimestamp(),
+                $rechargee->payeeLe()?->getTimestamp(),
+                sprintf('%s : la date de paiement ne survit pas a l\'aller-retour.', $nom),
+            );
         }
     }
 
@@ -88,7 +100,10 @@ final class CommandeRepositoryContractTest extends TestCase
             $rechargee = $repository->parIdentifiant($commande->identifiantCommande());
 
             try {
-                $rechargee->payer(ReferenceDePaiement::depuisChaine('PAY-999'));
+                $rechargee->payer(
+                    ReferenceDePaiement::depuisChaine('PAY-999'),
+                    new \DateTimeImmutable(CommandeBuilder::PASSEE_LE),
+                );
                 self::fail(sprintf('%s : l\'annulation n\'a pas ete persistee.', $nom));
             } catch (PaiementImpossible) {
                 self::assertTrue(true, sprintf('%s : l\'etat annule a bien traverse.', $nom));

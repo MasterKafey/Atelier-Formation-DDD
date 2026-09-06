@@ -17,6 +17,7 @@ use Bookshelf\Domain\Model\Commande\ReferenceDePaiement;
 use Bookshelf\Domain\Model\Common\Devise;
 use Bookshelf\Domain\Model\Common\Montant;
 use Bookshelf\Tests\Support\CommandeBuilder;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -76,7 +77,7 @@ final class CommandeTest extends TestCase
     {
         $commande = CommandeBuilder::creer()->confirmee()->construire();
 
-        $commande->payer(ReferenceDePaiement::depuisChaine('PAY-001'));
+        $commande->payer(ReferenceDePaiement::depuisChaine('PAY-001'), $this->dansLesDelais());
 
         self::assertContainsOnlyInstancesOf(CommandePayee::class, $commande->relacherEvenements());
     }
@@ -108,7 +109,7 @@ final class CommandeTest extends TestCase
 
         $this->expectException(PaiementImpossible::class);
 
-        $commande->payer(ReferenceDePaiement::depuisChaine('PAY-002'));
+        $commande->payer(ReferenceDePaiement::depuisChaine('PAY-002'), $this->dansLesDelais());
     }
 
     #[Test]
@@ -138,7 +139,7 @@ final class CommandeTest extends TestCase
 
         $this->expectException(PaiementImpossible::class);
 
-        $commande->payer(ReferenceDePaiement::depuisChaine('PAY-005'));
+        $commande->payer(ReferenceDePaiement::depuisChaine('PAY-005'), $this->dansLesDelais());
     }
 
     #[Test]
@@ -158,5 +159,41 @@ final class CommandeTest extends TestCase
 
         self::assertNotEmpty($commande->relacherEvenements());
         self::assertEmpty($commande->relacherEvenements(), 'Un evenement ne doit etre relache qu\'une fois.');
+    }
+
+    /*
+     * PALIER D. Ces deux tests ne connaissent aucune horloge : les dates sont des
+     * arguments, donc de simples valeurs. C'est ce qui les garde instantanes et
+     * parfaitement reproductibles.
+     */
+
+    #[Test]
+    public function une_commande_payee_dans_les_delais_enregistre_sa_date_de_paiement(): void
+    {
+        $commande = CommandeBuilder::creer()->confirmee()->construire();
+
+        $commande->payer(ReferenceDePaiement::depuisChaine('PAY-003'), $this->dansLesDelais());
+
+        self::assertEquals($this->dansLesDelais(), $commande->payeeLe());
+    }
+
+    #[Test]
+    public function une_commande_ne_peut_plus_etre_payee_apres_quarante_huit_heures(): void
+    {
+        $commande = CommandeBuilder::creer()->confirmee()->construire();
+
+        $this->expectException(PaiementImpossible::class);
+
+        $commande->payer(ReferenceDePaiement::depuisChaine('PAY-004'), $this->horsDelais());
+    }
+
+    private function dansLesDelais(): DateTimeImmutable
+    {
+        return new DateTimeImmutable(CommandeBuilder::PASSEE_LE . ' +47 hours');
+    }
+
+    private function horsDelais(): DateTimeImmutable
+    {
+        return new DateTimeImmutable(CommandeBuilder::PASSEE_LE . ' +49 hours');
     }
 }
