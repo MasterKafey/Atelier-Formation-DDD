@@ -7,7 +7,7 @@ namespace Bookshelf\Domain\Model\Common;
 use Webmozart\Assert\Assert;
 
 /**
- * A ECRIRE. Le taux applicable depend du pays de l'acheteur : c'est un service externe
+ * CORRIGE. Le taux applicable depend du pays de l'acheteur : c'est un service externe
  * qui le fournira (atelier 3). Ici, on encapsule seulement le pourcentage et le calcul.
  *
  * `appliquerA()` recoit un montant en centimes et rend le montant TTC en centimes.
@@ -16,18 +16,24 @@ use Webmozart\Assert\Assert;
  */
 final readonly class TauxDeTva
 {
+    private function __construct(private int $pourcentage)
+    {
+    }
+
     public static function depuisPourcentage(int $pourcentage): self
     {
-        throw new \RuntimeException('TODO atelier 2');
+        Assert::range($pourcentage, 0, 100, 'Taux de TVA hors bornes : %s');
+
+        return new self($pourcentage);
     }
 
     public function enPourcentage(): int
     {
-        throw new \RuntimeException('TODO atelier 2');
+        return $this->pourcentage;
     }
 
     public function appliquerA(int $montantEnCentimes): int
     {
-        throw new \RuntimeException('TODO atelier 2');
+        return (int) round($montantEnCentimes * (100 + $this->pourcentage) / 100);
     }
 }

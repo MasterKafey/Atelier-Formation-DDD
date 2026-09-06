@@ -11,7 +11,7 @@ use Bookshelf\Domain\Model\Common\Montant;
 use Bookshelf\Domain\Model\Common\TauxDeTva;
 
 /**
- * A ECRIRE. La racine de l'agregat Commande.
+ * CORRIGE. La racine de l'agregat Commande.
  *
  * Les cinq invariants a proteger :
  *   1. une commande confirmee a au moins une ligne ;
@@ -46,53 +46,111 @@ final class Commande
     /** @var object[] */
     private array $evenements = [];
 
+    private function __construct(
+        private readonly IdentifiantCommande $identifiantCommande,
+        private readonly AdresseEmail $adresseEmail,
+        private readonly CodePays $pays,
+        private readonly TauxDeTva $tauxDeTva,
+    ) {
+    }
+
     public static function passer(
         IdentifiantCommande $identifiantCommande,
         AdresseEmail $adresseEmail,
         CodePays $pays,
         TauxDeTva $tauxDeTva,
     ): self {
-        throw new \RuntimeException('TODO atelier 2');
+        return new self($identifiantCommande, $adresseEmail, $pays, $tauxDeTva);
     }
 
     public function ajouterLigne(IdentifiantEbook $identifiantEbook, Montant $prixUnitaire, Quantite $quantite): void
     {
-        throw new \RuntimeException('TODO atelier 2');
+        if ($this->etat !== EtatCommande::EnAttente) {
+            throw AjoutDeLigneImpossible::carCommandeNonEnAttente($this->identifiantCommande);
+        }
+
+        $this->lignes[] = new LigneDeCommande($identifiantEbook, $prixUnitaire, $quantite);
     }
 
     public function confirmer(): void
     {
-        throw new \RuntimeException('TODO atelier 2');
+        if ($this->etat !== EtatCommande::EnAttente) {
+            throw ConfirmationImpossible::carCommandeNonEnAttente($this->identifiantCommande);
+        }
+
+        if ($this->lignes === []) {
+            throw ConfirmationImpossible::carAucuneLigne($this->identifiantCommande);
+        }
+
+        $this->etat = EtatCommande::Confirmee;
+
+        $this->evenements[] = new CommandePassee(
+            $this->identifiantCommande,
+            $this->adresseEmail,
+            $this->totalTtc(),
+        );
     }
 
     public function payer(ReferenceDePaiement $reference): void
     {
-        throw new \RuntimeException('TODO atelier 2');
+        if ($this->etat === EtatCommande::Annulee) {
+            throw PaiementImpossible::carAnnulee($this->identifiantCommande);
+        }
+
+        if ($this->etat === EtatCommande::Payee) {
+            throw PaiementImpossible::carDejaPayee($this->identifiantCommande);
+        }
+
+        if ($this->etat === EtatCommande::EnAttente) {
+            throw PaiementImpossible::carNonConfirmee($this->identifiantCommande);
+        }
+
+        $this->etat = EtatCommande::Payee;
+        $this->referenceDePaiement = $reference;
+
+        $this->evenements[] = new CommandePayee($this->identifiantCommande, $this->totalTtc(), $reference);
     }
 
     public function annuler(): void
     {
-        throw new \RuntimeException('TODO atelier 2');
+        if ($this->etat === EtatCommande::Payee) {
+            throw AnnulationImpossible::carDejaPayee($this->identifiantCommande);
+        }
+
+        if ($this->etat === EtatCommande::Annulee) {
+            throw AnnulationImpossible::carDejaAnnulee($this->identifiantCommande);
+        }
+
+        $this->etat = EtatCommande::Annulee;
+
+        $this->evenements[] = new CommandeAnnulee($this->identifiantCommande);
     }
 
     public function totalHt(): Montant
     {
-        throw new \RuntimeException('TODO atelier 2');
+        return array_reduce(
+            $this->lignes,
+            static fn (Montant $total, LigneDeCommande $ligne): Montant => $total->plus($ligne->sousTotal()),
+            Montant::zero(Devise::EUR),
+        );
     }
 
     public function totalTtc(): Montant
     {
-        throw new \RuntimeException('TODO atelier 2');
+        return $this->totalHt()->avecTva($this->tauxDeTva);
     }
 
     public function identifiantCommande(): IdentifiantCommande
     {
-        throw new \RuntimeException('TODO atelier 2');
+        return $this->identifiantCommande;
     }
 
     /** @return object[] */
     public function relacherEvenements(): array
     {
-        throw new \RuntimeException('TODO atelier 2');
+        $evenements = $this->evenements;
+        $this->evenements = [];
+
+        return $evenements;
     }
 }

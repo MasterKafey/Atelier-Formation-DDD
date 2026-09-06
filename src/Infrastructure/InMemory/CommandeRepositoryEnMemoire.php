@@ -10,7 +10,7 @@ use Bookshelf\Domain\Model\Commande\CommandeRepository;
 use Bookshelf\Domain\Model\Commande\IdentifiantCommande;
 
 /**
- * A ECRIRE. Quinze lignes : c'est ce que coute une interface, et c'est ce qui rendra
+ * CORRIGE. Quinze lignes : c'est ce que coute une interface, et c'est ce qui rendra
  * possible toute la suite de tests de cas d'usage de l'atelier 3.
  */
 final class CommandeRepositoryEnMemoire implements CommandeRepository
@@ -20,16 +20,17 @@ final class CommandeRepositoryEnMemoire implements CommandeRepository
 
     public function prochainIdentifiant(): IdentifiantCommande
     {
-        throw new \RuntimeException('TODO atelier 2');
+        return IdentifiantCommande::generer();
     }
 
     public function enregistrer(Commande $commande): void
     {
-        throw new \RuntimeException('TODO atelier 2');
+        $this->commandes[$commande->identifiantCommande()->enChaine()] = $commande;
     }
 
     public function parIdentifiant(IdentifiantCommande $identifiantCommande): Commande
     {
-        throw new \RuntimeException('TODO atelier 2');
+        return $this->commandes[$identifiantCommande->enChaine()]
+            ?? throw CommandeIntrouvable::avecIdentifiant($identifiantCommande);
     }
 }

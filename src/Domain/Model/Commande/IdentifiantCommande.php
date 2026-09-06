@@ -8,7 +8,7 @@ use Symfony\Component\Uid\Uuid;
 use Webmozart\Assert\Assert;
 
 /**
- * A ECRIRE. Value object d'identite : le type reel de l'identifiant devient un detail
+ * CORRIGE. Value object d'identite : le type reel de l'identifiant devient un detail
  * interne. Le jour ou vous passez d'UUID v7 a autre chose, seule cette classe et
  * l'implementation du repository bougent.
  *
@@ -16,23 +16,29 @@ use Webmozart\Assert\Assert;
  */
 final readonly class IdentifiantCommande
 {
+    private function __construct(private string $id)
+    {
+    }
+
     public static function depuisChaine(string $id): self
     {
-        throw new \RuntimeException('TODO atelier 2');
+        Assert::uuid($id, 'Identifiant de commande invalide : %s');
+
+        return new self($id);
     }
 
     public static function generer(): self
     {
-        throw new \RuntimeException('TODO atelier 2');
+        return new self(Uuid::v7()->toRfc4122());
     }
 
     public function enChaine(): string
     {
-        throw new \RuntimeException('TODO atelier 2');
+        return $this->id;
     }
 
     public function estEgalA(self $autre): bool
     {
-        throw new \RuntimeException('TODO atelier 2');
+        return $this->id === $autre->id;
     }
 }
