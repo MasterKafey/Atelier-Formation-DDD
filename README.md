@@ -32,10 +32,10 @@ etre bloque par l'atelier precedent.
 | `atelier-1-corrige` | Une cartographie possible du domaine | vert, 1 test | sans objet |
 | `atelier-2` | 8 classes a ecrire, 17 tests **rouges** | **17 echecs sur 18** | sans objet |
 | `atelier-2-corrige` | Agregat Commande, value objects, repository en memoire | vert, 18 tests | sans objet |
-| `atelier-3` | 6 elements a ecrire, 8 tests **rouges**, 1 violation de couche | **8 echecs sur 24** | **1 violation** |
-| `atelier-3-corrige` | Ports et adaptateurs, view model, test de cas d'usage | vert, 24 tests | 0 violation |
-| `reference-complete` | Etat final : atelier 3 + persistance Doctrine | vert, 56 tests | 0 violation |
-| `palier-d-horloge` | Corrige du palier D : le temps entre dans le modele | vert, 100 tests | 0 violation |
+| `atelier-3` | 6 elements a ecrire, 9 tests **rouges**, 1 violation de couche | **9 echecs sur 28** | **1 violation** |
+| `atelier-3-corrige` | Ports et adaptateurs, view model, test de cas d'usage | vert, 28 tests | 0 violation |
+| `reference-complete` | Etat final : atelier 3 + persistance Doctrine | vert, 60 tests | 0 violation |
+| `palier-d-horloge` | Corrige du palier D : le temps entre dans le modele | vert, 104 tests | 0 violation |
 
 ```bash
 git checkout atelier-2
