@@ -36,6 +36,7 @@ etre bloque par l'atelier precedent.
 | `atelier-3-corrige` | Ports et adaptateurs, view model, test de cas d'usage | vert, 28 tests | 0 violation |
 | `reference-complete` | Etat final : atelier 3 + persistance Doctrine | vert, 60 tests | 0 violation |
 | `palier-d-horloge` | Corrige du palier D : le temps entre dans le modele | vert, 104 tests | 0 violation |
+| `palier-b-erreur-metier` | Corrige du palier B : parler a l'utilisateur depuis le coeur | vert, 123 tests | 0 violation |
 
 ```bash
 git checkout atelier-2
@@ -51,6 +52,7 @@ main
          |- atelier-3 - atelier-3-corrige
              |- reference-complete
                  |- palier-d-horloge
+                     |- palier-b-erreur-metier
 ```
 
 `reference-complete` est la branche a ouvrir pour montrer le resultat final : elle porte
@@ -61,6 +63,13 @@ l'atelier 2. Les quatre concessions faites a l'ORM y sont documentees dans
 `palier-d-horloge` va un cran plus loin : elle fait entrer le temps dans le modele sans
 lui faire perdre son determinisme, corrige du palier D de l'atelier 3. Voir
 `docs/palier-d-horloge.md`.
+
+`palier-b-erreur-metier` ferme la serie : comment le coeur signale un probleme destine a
+un humain sans savoir a quel humain il parle. Voir `docs/palier-b-erreur-metier.md`.
+
+Les paliers sont empiles pour n'avoir qu'une branche a ouvrir quand on veut montrer
+l'etat le plus abouti ; ils restent independants les uns des autres dans la progression
+pedagogique.
 
 Ces deux branches ajoutent des dependances (doctrine/orm, puis psr/clock et
 symfony/clock) : relancez `composer install` en arrivant dessus, et en les quittant.
