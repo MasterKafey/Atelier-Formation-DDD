@@ -34,6 +34,7 @@ etre bloque par l'atelier precedent.
 | `atelier-2-corrige` | Agregat Commande, value objects, repository en memoire | vert, 18 tests | sans objet |
 | `atelier-3` | 6 elements a ecrire, 8 tests **rouges**, 1 violation de couche | **8 echecs sur 24** | **1 violation** |
 | `atelier-3-corrige` | Ports et adaptateurs, view model, test de cas d'usage | vert, 24 tests | 0 violation |
+| `reference-complete` | Etat final : atelier 3 + persistance Doctrine | vert, 56 tests | 0 violation |
 
 ```bash
 git checkout atelier-2
@@ -41,6 +42,20 @@ composer test            # 17 echecs : c'est le point de depart
 ```
 
 Chaque atelier a sa fiche de travail dans `docs/atelier-N/`.
+
+```
+main
+ |- atelier-1 - atelier-1-corrige
+     |- atelier-2 - atelier-2-corrige
+         |- atelier-3 - atelier-3-corrige
+             |- reference-complete
+```
+
+`reference-complete` est la branche a ouvrir pour montrer le resultat final : elle porte
+tout l'atelier 3 plus la couche de persistance Doctrine, corrige du palier C de
+l'atelier 2. C'est la seule branche qui a besoin de doctrine/orm : relancez
+`composer install` en arrivant dessus, et en la quittant. Les quatre concessions faites a
+l'ORM y sont documentees dans `docs/atelier-2/corrige-palier-c.md`.
 
 ## Structure cible
 
