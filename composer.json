@@ -5,7 +5,11 @@
     "license": "proprietary",
     "require": {
         "php": ">=8.2",
+        "doctrine/dbal": "^4.2",
+        "doctrine/orm": "^3.3",
+        "symfony/cache": "^6.4 || ^7.0",
         "symfony/uid": "^6.4 || ^7.0",
+        "symfony/var-exporter": "^6.4 || ^7.0",
         "webmozart/assert": "^1.11"
     },
     "require-dev": {

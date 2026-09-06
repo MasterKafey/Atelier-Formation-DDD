@@ -9,49 +9,79 @@ use Bookshelf\Domain\Model\Common\CodePays;
 use Bookshelf\Domain\Model\Common\Devise;
 use Bookshelf\Domain\Model\Common\Montant;
 use Bookshelf\Domain\Model\Common\TauxDeTva;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
 
 /**
- * CORRIGE. La racine de l'agregat Commande.
+ * La racine de l'agregat Commande, desormais persistable.
  *
- * Les cinq invariants a proteger :
- *   1. une commande confirmee a au moins une ligne ;
- *   2. le total est toujours la somme des lignes, TVA appliquee ;
- *   3. une commande payee ne peut pas etre annulee ;
- *   4. une commande annulee ne peut pas etre payee ;
- *   5. on n'ajoute pas de ligne a une commande qui n'est plus en attente ;
- *   6. on ne paie que ce qui a ete confirme.
+ * CE QUI A CHANGE PAR RAPPORT A L'ATELIER 2, et pourquoi :
  *
- * L'etat `Confirmee` est ce qui rend l'invariant 1 vrai EN PERMANENCE : sans lui, la
- * confirmation n'etait qu'un instant, et on pouvait ajouter une ligne juste apres,
- * rendant faux le total deja annonce par `CommandePassee`.
+ *   1. Des attributs `#[ORM\...]`. L'entite reste du code coeur au sens des deux regles :
+ *      on peut l'instancier et appeler ses methodes sans base de donnees, sans contexte.
+ *      Les attributs contiennent des details techniques (noms de colonnes, types) ; c'est
+ *      un compromis assume, et il vaut mieux que d'exposer les proprietes privees a
+ *      l'exterieur pour qu'un mapper les lise.
  *
- * Contraintes :
+ *   2. `$lignes` est une `Collection` Doctrine et non plus un `array`. C'est la
+ *      concession la plus visible : utiliser les associations de l'ORM fait entrer
+ *      `Doctrine\Common\Collections` dans le domaine. On l'accepte pour les entites
+ *      FILLES de l'agregat (regle 2 : associations un-a-plusieurs uniquement). On ne
+ *      l'accepterait pas pour referencer un autre agregat, qui reste designe par son
+ *      identifiant.
+ *
+ *   3. `$lignes` est bidirectionnelle : `LigneDeCommande` connait sa commande. C'est une
+ *      exigence de l'ORM pour un `mappedBy`, pas un choix de modelisation.
+ *
+ * CE QUI N'A PAS CHANGE, et c'est l'essentiel :
  *   - aucun setter, aucune methode dont le nom commence par `set` ;
- *   - aucun getter autre que `identifiantCommande()`, `relacherEvenements()` et les deux totaux ;
- *   - `payer()`, `annuler()`, `confirmer()` et `ajouterLigne()` retournent `void` : ce sont des
- *     commandes, pas des requetes.
- *
- * Les evenements sont ENREGISTRES ici et RELACHES par le service applicatif apres
- * l'enregistrement en base (jour 2, section 7).
+ *   - les memes cinq invariants, protteges par les memes gardes ;
+ *   - les evenements ne sont PAS mappes : ils sont transitoires, ils ne survivent pas a
+ *     un rechargement, et c'est voulu.
  */
-final class Commande
+#[ORM\Entity]
+#[ORM\Table(name: 'orders')]
+class Commande
 {
+    #[ORM\Column(type: 'string', name: 'status', length: 20, enumType: EtatCommande::class)]
     private EtatCommande $etat = EtatCommande::EnAttente;
 
+    #[ORM\Column(type: 'payment_reference', name: 'payment_reference', nullable: true)]
     private ?ReferenceDePaiement $referenceDePaiement = null;
 
-    /** @var LigneDeCommande[] */
-    private array $lignes = [];
+    /** @var Collection<int, LigneDeCommande> */
+    #[ORM\OneToMany(
+        targetEntity: LigneDeCommande::class,
+        mappedBy: 'commande',
+        cascade: ['persist', 'remove'],
+        orphanRemoval: true,
+    )]
+    private Collection $lignes;
 
-    /** @var object[] */
+    /**
+     * Non mappe : Doctrine ignore les proprietes sans attribut. Les evenements sont
+     * transitoires, relaches par le service applicatif juste apres l'enregistrement.
+     *
+     * @var object[]
+     */
     private array $evenements = [];
 
     private function __construct(
-        private readonly IdentifiantCommande $identifiantCommande,
-        private readonly AdresseEmail $adresseEmail,
-        private readonly CodePays $pays,
-        private readonly TauxDeTva $tauxDeTva,
+        #[ORM\Id]
+        #[ORM\Column(type: 'order_id', name: 'id')]
+        private IdentifiantCommande $identifiantCommande,
+
+        #[ORM\Column(type: 'email_address', name: 'email')]
+        private AdresseEmail $adresseEmail,
+
+        #[ORM\Column(type: 'country_code', name: 'country')]
+        private CodePays $pays,
+
+        #[ORM\Column(type: 'vat_rate', name: 'vat_rate')]
+        private TauxDeTva $tauxDeTva,
     ) {
+        $this->lignes = new ArrayCollection();
     }
 
     public static function passer(
@@ -69,7 +99,7 @@ final class Commande
             throw AjoutDeLigneImpossible::carCommandeNonEnAttente($this->identifiantCommande);
         }
 
-        $this->lignes[] = new LigneDeCommande($identifiantEbook, $prixUnitaire, $quantite);
+        $this->lignes->add(new LigneDeCommande($this, $identifiantEbook, $prixUnitaire, $quantite));
     }
 
     public function confirmer(): void
@@ -78,7 +108,7 @@ final class Commande
             throw ConfirmationImpossible::carCommandeNonEnAttente($this->identifiantCommande);
         }
 
-        if ($this->lignes === []) {
+        if ($this->lignes->isEmpty()) {
             throw ConfirmationImpossible::carAucuneLigne($this->identifiantCommande);
         }
 
@@ -129,7 +159,7 @@ final class Commande
     public function totalHt(): Montant
     {
         return array_reduce(
-            $this->lignes,
+            $this->lignes->toArray(),
             static fn (Montant $total, LigneDeCommande $ligne): Montant => $total->plus($ligne->sousTotal()),
             Montant::zero(Devise::EUR),
         );

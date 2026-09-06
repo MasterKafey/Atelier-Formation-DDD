@@ -75,3 +75,6 @@ Testez-le avec `CommandeRepositoryEnMemoire`. (Vous le retrouverez tout fait a l
 **Palier C : Doctrine.** Ecrivez le type `IdentifiantCommandeType`, le mapping par attributs de
 `Commande` et `LigneDeCommande`, et la migration. Verifiez que `Commande.php` ne reference rien
 d'autre que `Doctrine\ORM\Mapping`.
+
+Corrige sur la branche `reference-complete`, avec le detail des quatre concessions faites
+a l'ORM : voir `docs/reference-complete.md`.

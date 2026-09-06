@@ -41,4 +41,20 @@ final readonly class IdentifiantCommande
     {
         return $this->id === $autre->id;
     }
+
+    /**
+     * CONCESSION A L'ORM, et il faut savoir la nommer.
+     *
+     * Doctrine construit sa carte d'identite en convertissant l'identifiant en chaine.
+     * Un value object en cle primaire doit donc etre convertible en chaine, sans quoi
+     * `persist()` echoue avec « Object of class IdentifiantCommande could not be converted to string ».
+     *
+     * C'est du code technique dans une classe de domaine. Le compromis reste acceptable :
+     * la methode n'introduit aucune dependance, ne demande aucun contexte, et `IdentifiantCommande`
+     * reste instanciable et testable sans base de donnees.
+     */
+    public function __toString(): string
+    {
+        return $this->id;
+    }
 }
