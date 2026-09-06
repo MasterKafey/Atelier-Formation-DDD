@@ -1,6 +1,7 @@
 /vendor/
 /.phpunit.cache/
 /.php-cs-fixer.cache
+/.deptrac.cache
 /deptrac.cache
 /.idea/
 /.vscode/

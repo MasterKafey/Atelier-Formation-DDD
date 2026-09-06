@@ -25,20 +25,22 @@ Le depot est une suite lineaire de branches. Chaque atelier a sa branche de depa
 branche de corrigé, ce qui permet de reprendre la formation a n'importe quelle etape sans
 etre bloque par l'atelier precedent.
 
-| Branche | Contenu | Etat des tests |
-|---|---|---|
-| `main` | Socle du projet, code legacy a lire | vert (suite de fumee) |
-| `atelier-1` | Materiel de l'atelier 1 (entretien metier). Pas de code a ecrire. | vert |
-| `atelier-1-corrige` | Une cartographie possible du domaine | vert |
-| `atelier-2` | Squelettes + 14 tests **rouges** a faire passer | **rouge** |
-| `atelier-2-corrige` | Agregat Commande complet, value objects, repository | vert |
-| `atelier-3` | Squelettes + tests **rouges** du jour 3 | **rouge** |
-| `atelier-3-corrige` | Ports et adaptateurs, view model, test de cas d'usage | vert |
+| Branche | Contenu | `composer test` | `composer deptrac` |
+|---|---|---|---|
+| `main` | Socle du projet, code legacy a lire | vert, 1 test | sans objet |
+| `atelier-1` | Entretien metier et fiche de travail. Pas de code a ecrire. | vert, 1 test | sans objet |
+| `atelier-1-corrige` | Une cartographie possible du domaine | vert, 1 test | sans objet |
+| `atelier-2` | 8 classes a ecrire, 17 tests **rouges** | **17 echecs sur 18** | sans objet |
+| `atelier-2-corrige` | Agregat Commande, value objects, repository en memoire | vert, 18 tests | sans objet |
+| `atelier-3` | 6 elements a ecrire, 8 tests **rouges**, 1 violation de couche | **8 echecs sur 24** | **1 violation** |
+| `atelier-3-corrige` | Ports et adaptateurs, view model, test de cas d'usage | vert, 24 tests | 0 violation |
 
 ```bash
 git checkout atelier-2
 composer test            # 17 echecs : c'est le point de depart
 ```
+
+Chaque atelier a sa fiche de travail dans `docs/atelier-N/`.
 
 ## Structure cible
 
