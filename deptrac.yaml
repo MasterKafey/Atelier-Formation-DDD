@@ -1,0 +1,39 @@
+# Verification automatique de la regle de dependance.
+#
+#   composer deptrac        (ou : vendor/bin/deptrac analyse)
+#
+# Les dependances entre couches ne vont que vers l'interieur :
+#   Infrastructure -> Application -> Domaine
+#
+# Branchez-le dans la CI. Une violation devient une build cassee, pas une remarque en
+# revue de code qu'on finit par lacher.
+#
+# Aucun outil ne sait verifier « ceci est du code coeur » : deptrac verifie le SENS des
+# dependances entre namespaces, ce qui attrape la majorite des derives. Il ne verra pas
+# un file_get_contents() au fond d'une entite. La revue de code garde un role.
+
+deptrac:
+  paths:
+    - ./src
+
+  layers:
+    - name: Infrastructure
+      collectors:
+        - type: classNameRegex
+          value: '#^Bookshelf\\Infrastructure\\#'
+    - name: Application
+      collectors:
+        - type: classNameRegex
+          value: '#^Bookshelf\\Application\\#'
+    - name: Domain
+      collectors:
+        - type: classNameRegex
+          value: '#^Bookshelf\\Domain\\#'
+
+  ruleset:
+    Infrastructure:
+      - Application
+      - Domain
+    Application:
+      - Domain
+    Domain: ~          # le domaine ne depend de rien

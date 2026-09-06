@@ -14,6 +14,9 @@
         <testsuite name="usecase">
             <directory>tests/UseCase</directory>
         </testsuite>
+        <testsuite name="adapter">
+            <directory>tests/Adapter</directory>
+        </testsuite>
         <testsuite name="smoke">
             <directory>tests/Smoke</directory>
         </testsuite>
